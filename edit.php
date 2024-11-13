@@ -94,10 +94,15 @@ $authorStmt = $pdo->prepare('
 $authorStmt->execute(['id' => $id]);
 $authors = $authorStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Prepare the SQL to fetch all authors for the add option
+// Get IDs of authors already associated with the book
+$existingAuthorIds = array_column($authors, 'id');
+
+// Fetch all authors and filter out the existing ones
 $allAuthorsStmt = $pdo->prepare('SELECT id, CONCAT(first_name, " ", last_name) AS full_name FROM authors');
 $allAuthorsStmt->execute();
-$allAuthors = $allAuthorsStmt->fetchAll(PDO::FETCH_ASSOC);
+$allAuthors = array_filter($allAuthorsStmt->fetchAll(PDO::FETCH_ASSOC), function ($author) use ($existingAuthorIds) {
+    return !in_array($author['id'], $existingAuthorIds);
+});
 
 // Format release_date to YYYY-MM-DD
 $release_date = date('Y-m-d', strtotime($book['release_date']));
